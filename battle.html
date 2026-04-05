@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tug of Code - Battleground</title>
+    <style>
+        :root {
+            --bg-purple: #1a0b2e;
+            --panel-purple: #3d2461;
+            --accent-pink: #ff00ff;
+            --team-a-color: #00d2ff;
+            --team-b-color: #ff9f43;
+            --success-green: #4CAF7B;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg-purple);
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .score-bar {
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            padding: 20px 0;
+            background: rgba(0,0,0,0.6);
+            border-bottom: 3px solid var(--accent-pink);
+            font-size: 1.5rem;
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+
+        .score-box { padding: 10px 25px; border-radius: 15px; min-width: 200px; text-align: center; }
+        #t1-display { border: 3px solid var(--team-a-color); color: var(--team-a-color); box-shadow: 0 0 15px var(--team-a-color); }
+        #t2-display { border: 3px solid var(--team-b-color); color: var(--team-b-color); box-shadow: 0 0 15px var(--team-b-color); }
+
+        #arena {
+            position: relative;
+            width: 100%;
+            height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: rgba(255,255,255,0.02);
+        }
+
+        #rope {
+            position: absolute;
+            height: 12px;
+            width: 300%;
+            background: linear-gradient(90deg, #333, #eee, #333);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.8);
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1;
+        }
+
+        .team-squad {
+            position: absolute;
+            display: flex;
+            gap: 15px;
+            transition: transform 0.5s ease;
+            z-index: 2;
+        }
+
+        .character {
+            width: 50px;
+            height: 70px;
+            border-radius: 12px 12px 4px 4px;
+            position: relative;
+            animation: bounce 0.6s infinite alternate;
+        }
+
+        .character::before { content: '● ●'; position: absolute; top: 15px; left: 50%; transform: translateX(-50%); color: white; font-size: 10px; }
+        .c-left { background: var(--team-a-color); box-shadow: 0 0 20px var(--team-a-color); }
+        .c-right { background: var(--team-b-color); box-shadow: 0 0 20px var(--team-b-color); }
+
+        .game-ui { display: flex; width: 95%; gap: 30px; flex: 1; padding-bottom: 30px; }
+        .quiz-card { flex: 1; background: var(--panel-purple); border-radius: 25px; padding: 25px; display: flex; flex-direction: column; border: 3px solid rgba(255,255,255,0.1); transition: border-color 0.3s; }
+        .question-text { font-size: 1.3rem; min-height: 90px; margin-bottom: 20px; text-align: center; display: flex; align-items: center; justify-content: center; font-weight: 600; }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .ans-btn { background: rgba(255,255,255,0.07); border: 2px solid rgba(255,255,255,0.1); color: white; padding: 18px; border-radius: 15px; cursor: pointer; font-size: 1.1rem; transition: 0.2s; font-weight: bold; }
+        .ans-btn:hover { background: var(--accent-pink); transform: translateY(-4px); }
+
+        #win-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; text-align: center; }
+        .win-content h1 { font-size: 4rem; color: var(--accent-pink); text-shadow: 0 0 20px var(--accent-pink); }
+        .play-again-btn { background: var(--success-green); color: white; padding: 15px 40px; border-radius: 50px; font-size: 1.5rem; font-weight: bold; border: none; cursor: pointer; margin-top: 20px; }
+
+        @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-12px); } }
+        .confetti { position: absolute; width: 10px; height: 10px; animation: fall 3s linear infinite; z-index: 1001; pointer-events: none; }
+        @keyframes fall { to { transform: translateY(100vh) rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div class="score-bar">
+        <div id="t1-display" class="score-box">TEAM 1: 0</div>
+        <div id="topic-tag">TOPIC: LOADING...</div>
+        <div id="t2-display" class="score-box">TEAM 2: 0</div>
+    </div>
+
+    <div id="arena">
+        <div id="rope"></div>
+        <div id="team-left-squad" class="team-squad" style="left: 15%;"></div>
+        <div id="team-right-squad" class="team-squad" style="right: 15%;"></div>
+    </div>
+
+    <div class="game-ui">
+        <div class="quiz-card" id="card-1">
+            <div class="question-text" id="q1">Ready?</div>
+            <div class="btn-grid" id="opts-1"></div>
+        </div>
+        <div class="quiz-card" id="card-2">
+            <div class="question-text" id="q2">Ready?</div>
+            <div class="btn-grid" id="opts-2"></div>
+        </div>
+    </div>
+
+    <div id="win-overlay">
+        <div class="win-content">
+            <h1 id="winner-name">TEAM WINS!</h1>
+            <p style="font-size: 1.5rem;">The coding battle is over!</p>
+            <button class="play-again-btn" onclick="window.location.href='index.html'">Play Again</button>
+        </div>
+    </div>
+
+    <audio id="sfx-correct" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3"></audio>
+
+    <script>
+        // GAME CONFIGURATION
+        const gameData = {
+            team1: localStorage.getItem('team1') || "Team 1",
+            team2: localStorage.getItem('team2') || "Team 2",
+            difficulty: (localStorage.getItem('difficulty') || "easy").toLowerCase(),
+            topic: (localStorage.getItem('topic') || "basics of computer").toLowerCase().trim(),
+            pointsToWin: parseInt(localStorage.getItem('points')) || 5
+        };
+
+        const masterBank = {
+            "basics of computer": {
+    easy: [
+        { q: "What is the primary input device for text?", a: "Keyboard", o: ["Mouse", "Keyboard", "Scanner", "Printer"] },
+        { q: "Which part of the computer displays images?", a: "Monitor", o: ["Monitor", "CPU", "RAM", "HDD"] },
+        { q: "Shortcut for saving a file?", a: "Ctrl + S", o: ["Ctrl + S", "Ctrl + P", "Ctrl + Z", "Ctrl + V"] },
+        { q: "A Mouse is what type of device?", a: "Input", o: ["Input", "Output", "Storage", "Processing"] },
+        { q: "What does CPU stand for?", a: "Central Processing Unit", o: ["Central Processing Unit", "Computer Personal Unit", "Control Power Unit", "Core Process Utility"] },
+        { q: "Which is the smallest unit of data?", a: "Bit", o: ["Bit", "Byte", "Nibble", "Pixel"] },
+        { q: "1024 Bytes is equal to?", a: "1 KB", o: ["1 MB", "1 KB", "1 GB", "1 TB"] },
+        { q: "Which device is used for hard copies?", a: "Printer", o: ["Monitor", "Speaker", "Printer", "Plotter"] },
+        { q: "What is the shortcut to 'Paste'?", a: "Ctrl + V", o: ["Ctrl + P", "Ctrl + V", "Ctrl + C", "Ctrl + X"] },
+        { q: "Which is a mobile operating system?", a: "Android", o: ["Windows", "Android", "Linux", "DOS"] },
+        { q: "RAM is ____ memory.", a: "Temporary", o: ["Permanent", "Temporary", "Secondary", "External"] },
+        { q: "Which key is used to refresh a page?", a: "F5", o: ["F1", "F5", "F12", "Esc"] },
+        { q: "The physical parts of a computer are?", a: "Hardware", o: ["Software", "Hardware", "Firmware", "Malware"] },
+        { q: "Who is known as the Father of Computers?", a: "Charles Babbage", o: ["Charles Babbage", "Alan Turing", "Bill Gates", "Steve Jobs"] },
+        { q: "Which of these is a web browser?", a: "Chrome", o: ["Windows", "Chrome", "Java", "Python"] },
+        { q: "What is the brain of the computer?", a: "CPU", o: ["RAM", "CPU", "Hard Disk", "Monitor"] },
+        { q: "Shortcut for 'Undo'?", a: "Ctrl + Z", o: ["Ctrl + Z", "Ctrl + Y", "Ctrl + U", "Ctrl + X"] },
+        { q: "Which is an output device?", a: "Speaker", o: ["Microphone", "Keyboard", "Speaker", "Scanner"] },
+        { q: "What does WWW stand for?", a: "World Wide Web", o: ["World Wide Web", "Web Wide World", "Whole Wide Web", "World Web Wide"] },
+        { q: "Which key is used to delete to the left?", a: "Backspace", o: ["Delete", "Backspace", "Enter", "Shift"] }
+    ],
+    medium: [
+        { q: "What is the full form of 'GUI'?", a: "Graphical User Interface", o: ["General User Icon", "Graphical User Interface", "Global Unit ID", "Guide User Interface"] },
+        { q: "Which is a volatile memory?", a: "RAM", o: ["SSD", "HDD", "RAM", "ROM"] },
+        { q: "What does 'BIOS' stand for?", a: "Basic Input Output System", o: ["Binary Input Output System", "Basic Input Output System", "Base Internal OS", "Board Input OS"] },
+        { q: "Which protocol is used for email?", a: "SMTP", o: ["HTTP", "FTP", "SMTP", "IP"] },
+        { q: "Main circuit board of a computer?", a: "Motherboard", o: ["CPU", "Motherboard", "GPU", "Sound Card"] },
+        { q: "Full form of PDF?", a: "Portable Document Format", o: ["Personal Data File", "Portable Document Format", "Printed Digital File", "Public Data Folder"] },
+        { q: "Which is an open-source OS?", a: "Linux", o: ["Windows", "MacOS", "Linux", "iOS"] },
+        { q: "A 'Bug' in a program is a/an?", a: "Error", o: ["Virus", "Error", "Hacker", "Update"] },
+        { q: "What is 1024 GB equal to?", a: "1 TB", o: ["1 MB", "1 TB", "1 PB", "1 EB"] },
+        { q: "Which port is most common for peripherals?", a: "USB", o: ["HDMI", "VGA", "USB", "Ethernet"] },
+        { q: "What is 'Phishing'?", a: "A Cyber Scam", o: ["A Cyber Scam", "A Coding Language", "A Game", "A Type of RAM"] },
+        { q: "Extension for a Word file?", a: ".docx", o: [".txt", ".docx", ".exe", ".pdf"] },
+        { q: "Which memory is non-volatile?", a: "ROM", o: ["RAM", "Cache", "ROM", "Registers"] },
+        { q: "Shortcut to switch apps?", a: "Alt + Tab", o: ["Alt + Tab", "Ctrl + Tab", "Shift + Tab", "Win + L"] },
+        { q: "What does HTTP stand for?", a: "Hypertext Transfer Protocol", o: ["Hypertext Transfer Protocol", "High Text Transfer Process", "Hidden Text Tech Protocol", "Hyper Tool Transfer Program"] },
+        { q: "Who founded Microsoft?", a: "Bill Gates", o: ["Steve Jobs", "Bill Gates", "Mark Zuckerberg", "Jeff Bezos"] },
+        { q: "Resolution of a monitor is measured in?", a: "Pixels", o: ["Pixels", "Inches", "Hertz", "Bytes"] },
+        { q: "Which is not an OS?", a: "Java", o: ["Windows", "Linux", "Java", "MacOS"] },
+        { q: "What is a 'Firewall' used for?", a: "Security", o: ["Cooling", "Security", "Fast Internet", "File Storage"] },
+        { q: "Standard keyboard layout name?", a: "QWERTY", o: ["QWERTY", "AZERTY", "DVORAK", "ABCDE"] }
+    ],
+    hard: [
+        { q: "What is the speed of a CPU measured in?", a: "Gigahertz", o: ["Gigabytes", "Gigahertz", "Megabits", "Terabytes"] },
+        { q: "Who is the Father of Modern Computing?", a: "Alan Turing", o: ["Charles Babbage", "Alan Turing", "Steve Jobs", "Bill Gates"] },
+        { q: "The 'Heart' of the CPU is?", a: "Control Unit", o: ["ALU", "Control Unit", "Registers", "Bus"] },
+        { q: "First high-level programming language?", a: "FORTRAN", o: ["C", "FORTRAN", "BASIC", "COBOL"] },
+        { q: "A 'Nibble' consists of how many bits?", a: "4", o: ["2", "4", "8", "16"] },
+        { q: "Which layer of OSI handles IP addresses?", a: "Network", o: ["Physical", "Data Link", "Network", "Transport"] },
+        { q: "What is the core of an OS called?", a: "Kernel", o: ["Shell", "Kernel", "Core", "Driver"] },
+        { q: "In binary, what is 10 + 10?", a: "100", o: ["20", "101", "11", "100"] },
+        { q: "Which gate is a 'universal' gate?", a: "NAND", o: ["AND", "OR", "NAND", "NOT"] },
+        { q: "Cache memory sits between RAM and?", a: "CPU", o: ["HDD", "CPU", "Monitor", "ROM"] },
+        { q: "Who invented the first computer mouse?", a: "Douglas Engelbart", o: ["Steve Jobs", "Douglas Engelbart", "Bill Gates", "Alan Turing"] },
+        { q: "Process of starting an OS is?", a: "Booting", o: ["Loading", "Booting", "Flashing", "Starting"] },
+        { q: "Common network topology type?", a: "Star", o: ["Star", "Circle", "Cross", "Square"] },
+        { q: "What is 'Defragmentation'?", a: "Reorganizing disk data", o: ["Deleting files", "Reorganizing disk data", "Updating BIOS", "Cooling the CPU"] },
+        { q: "Unit used for data transmission speed?", a: "bps", o: ["bps", "Bytes", "hertz", "watts"] },
+        { q: "What is a 'Mainframe'?", a: "A powerful computer", o: ["A powerful computer", "A small laptop", "A keyboard type", "A type of virus"] },
+        { q: "Which is a 64-bit value storage?", a: "Register", o: ["Register", "Pixel", "Gate", "Bit"] },
+        { q: "Who created the World Wide Web?", a: "Tim Berners-Lee", o: ["Bill Gates", "Tim Berners-Lee", "Alan Turing", "Steve Jobs"] },
+        { q: "What is 'Firmware'?", a: "Software on hardware", o: ["Hard software", "Software on hardware", "A fast loop", "A type of RAM"] },
+        { q: "An IPv4 address consists of?", a: "32 bits", o: ["16 bits", "32 bits", "64 bits", "128 bits"] }
+    ]
+},
+            "variable basics": {
+    easy: [
+        { q: "What is the best definition of a variable?", a: "A named storage location", o: ["A named storage location", "A type of monitor", "A physical cable", "A permanent file"] },
+        { q: "Which symbol is used to assign a value?", a: "=", o: ["=", "==", "->", ":="] },
+        { q: "What data type is 'Hello'?", a: "String", o: ["String", "Integer", "Float", "Boolean"] },
+        { q: "What data type is the number 25?", a: "Integer", o: ["Integer", "String", "Float", "Boolean"] },
+        { q: "Which of these is a Boolean?", a: "False", o: ["False", "10.5", "'No'", "0"] },
+        { q: "Can a variable name start with a digit?", a: "No", o: ["Yes", "No", "Only in Python", "In some cases"] },
+        { q: "Symbol for comments in Python?", a: "#", o: ["#", "//", "/*", "--"] },
+        { q: "Creating a variable for the first time is?", a: "Declaration", o: ["Declaration", "Deletion", "Execution", "Looping"] },
+        { q: "Result of x = 8 + 2?", a: "10", o: ["10", "82", "Error", "6"] },
+        { q: "Which type stores 3.14159?", a: "Float", o: ["Float", "Integer", "Boolean", "None"] },
+        { q: "Variables ___ change their value.", a: "Can", o: ["Can", "Cannot", "Must", "Never"] },
+        { q: "Which is a valid name?", a: "player_score", o: ["player score", "player_score", "1stPlayer", "score!"] },
+        { q: "What is 'const' used for?", a: "Fixed values", o: ["Fixed values", "Changing values", "Loops", "Deletions"] },
+        { q: "What type is the value 100?", a: "Integer", o: ["Integer", "Boolean", "String", "Float"] },
+        { q: "Value of x if: x=5; x=2;?", a: "2", o: ["5", "2", "7", "Error"] },
+        { q: "What represents 'nothing' in code?", a: "Null", o: ["Null", "Zero", "False", "Blank"] },
+        { q: "Is 'X' different from 'x'?", a: "Yes", o: ["Yes", "No", "Only in HTML", "Depends on font"] },
+        { q: "Naming style 'userAge'?", a: "Camel Case", o: ["Camel Case", "Snake Case", "Pascal Case", "Flat Case"] },
+        { q: "Keyword for 'constant' in JavaScript?", a: "const", o: ["const", "let", "var", "fixed"] },
+        { q: "Adding 'A' + 'B' results in?", a: "'AB'", o: ["'AB'", "3", "Error", "0"] }
+    ],
+    medium: [
+        { q: "What is 'Scope'?", a: "Where a variable is usable", o: ["Where a variable is usable", "The size of a variable", "The variable's name", "A type of loop"] },
+        { q: "What is 'Concatenation'?", a: "Joining two strings", o: ["Joining two strings", "Adding two numbers", "Deleting a variable", "A type of error"] },
+        { q: "What is a 'Global' variable?", a: "Accessible everywhere", o: ["Accessible everywhere", "Only inside a function", "Only for numbers", "Temporary"] },
+        { q: "Naming style 'user_name'?", a: "Snake Case", o: ["Snake Case", "Camel Case", "Pascal Case", "Flat Case"] },
+        { q: "What is 'Initialization'?", a: "Giving an initial value", o: ["Giving an initial value", "Naming the variable", "Deleting data", "Printing"] },
+        { q: "Result of '5' + 5 in JavaScript?", a: "'55'", o: ["10", "'55'", "Error", "5"] },
+        { q: "Reserved words (like 'if') are?", a: "Keywords", o: ["Keywords", "Variables", "Constants", "Strings"] },
+        { q: "Size of a standard Integer (bytes)?", a: "4", o: ["1", "2", "4", "8"] },
+        { q: "Dynamic typing means?", a: "Type can change", o: ["Type can change", "Type is fixed", "No types used", "Binary only"] },
+        { q: "Immutable means the value ___.", a: "Cannot be changed", o: ["Cannot be changed", "Is always zero", "Is public", "Is a decimal"] },
+        { q: "Variable storage for local data?", a: "Stack", o: ["Stack", "Heap", "Monitor", "ROM"] },
+        { q: "Result of 10 % 3?", a: "1", o: ["3", "1", "0", "0.33"] },
+        { q: "Difference between = and ==?", a: "Assignment vs Equality", o: ["Assignment vs Equality", "Math vs Logic", "Both are same", "Error"] },
+        { q: "What is a 'string literal'?", a: "Text in quotes", o: ["Text in quotes", "A variable name", "A math formula", "A comment"] },
+        { q: "Converting '10' to 10 is?", a: "Casting", o: ["Casting", "Naming", "Looping", "Deleting"] },
+        { q: "What is a 'decrement'?", a: "Subtracting 1", o: ["Subtracting 1", "Adding 1", "Multiplication", "Squaring"] },
+        { q: "Scope of 'let' in JavaScript?", a: "Block level", o: ["Block level", "Global only", "Function only", "File level"] },
+        { q: "Maximum value of a 1-bit variable?", a: "1", o: ["1", "10", "100", "Infinite"] },
+        { q: "What is 'CamelCase'?", a: "First letter lowercase", o: ["First letter lowercase", "All uppercase", "Uses underscores", "No capital letters"] },
+        { q: "What is an 'Undefined' variable?", a: "Declared but no value", o: ["Declared but no value", "Deleted", "A global variable", "A constant"] }
+    ],
+    hard: [
+        { q: "What is a 'Pointer'?", a: "A memory address", o: ["A memory address", "A variable name", "A data value", "An index"] },
+        { q: "What is 'Variable Shadowing'?", a: "Inner scope hides outer", o: ["Inner scope hides outer", "Copying a variable", "Deleting a variable", "A memory leak"] },
+        { q: "Heap memory is used for?", a: "Dynamic allocation", o: ["Dynamic allocation", "Function calls", "Fast access", "Instruction storage"] },
+        { q: "What is a 'Memory Leak'?", a: "Unused memory not freed", o: ["Unused memory not freed", "Data being deleted", "CPU overheating", "Fast coding"] },
+        { q: "Symbol for 'Address-of' in C?", a: "&", o: ["&", "*", "#", "@"] },
+        { q: "What is a 'Dangling Pointer'?", a: "Points to deleted memory", o: ["Points to deleted memory", "Points to null", "Unused variable", "A loop index"] },
+        { q: "Static typing occurs at?", a: "Compile time", o: ["Compile time", "Runtime", "Installation", "Execution"] },
+        { q: "A 'Constant' is stored in?", a: "Read-only section", o: ["Read-only section", "The Heap", "The Stack", "Cache"] },
+        { q: "What is 'Garbage Collection'?", a: "Automatic memory cleanup", o: ["Automatic memory cleanup", "Deleting code", "Fixing bugs", "Binary conversion"] },
+        { q: "Difference between 'null' and 'undefined'?", a: "Assigned vs Not assigned", o: ["Assigned vs Not assigned", "Same thing", "Numbers vs Text", "Error"] },
+        { q: "A 'Type Alias' is?", a: "A new name for a type", o: ["A new name for a type", "A hidden variable", "A global constant", "A syntax error"] },
+        { q: "What is 'Hoisting' in JS?", a: "Declarations moved to top", o: ["Declarations moved to top", "Variables deleted", "Loops accelerated", "Errors caught"] },
+        { q: "What is a 'Global Namespace'?", a: "Shared storage for all", o: ["Shared storage for all", "Local storage", "Hardware name", "System folder"] },
+        { q: "Size of a 'double' vs 'float'?", a: "Double is twice as big", o: ["Double is twice as big", "Float is bigger", "They are equal", "Float is text"] },
+        { q: "A 'Volatile' variable?", a: "Can change unexpectedly", o: ["Can change unexpectedly", "Never changes", "Is only zero", "Is invisible"] },
+        { q: "Meaning of 'Strict Mode'?", a: "Forbids unsafe actions", o: ["Forbids unsafe actions", "Speeds up code", "Changes colors", "Adds comments"] },
+        { q: "What is a 'Literal'?", a: "A hard-coded value", o: ["A hard-coded value", "A variable name", "A function", "A keyword"] },
+        { q: "What is 'Type Inference'?", a: "Compiler guesses the type", o: ["Compiler guesses the type", "User types manually", "No types allowed", "Binary only"] },
+        { q: "What is a 'Primitive' type?", a: "Basic building block", o: ["Basic building block", "A complex object", "A type of loop", "Old code"] },
+        { q: "Which is most memory efficient?", a: "Boolean", o: ["Boolean", "Integer", "String", "Float"] }
+    ]
+},
+           "logic & loops": {
+    easy: [
+        { q: "If a condition is False, which block runs?", a: "Else", o: ["Else", "Then", "If", "Stop"] },
+        { q: "Which loop runs as long as a condition is True?", a: "While", o: ["While", "For", "If", "Else"] },
+        { q: "Symbol for 'Greater Than'?", a: ">", o: [">", "<", "==", "!="] },
+        { q: "Symbol for 'Equal To' in logic?", a: "==", o: ["==", "=", "!=", "+="] },
+        { q: "A loop that never ends is called?", a: "Infinite", o: ["Infinite", "Broken", "Static", "Circle"] },
+        { q: "What does 'break' do?", a: "Exits the loop", o: ["Exits the loop", "Skips one turn", "Starts over", "Crashes"] },
+        { q: "Which loop is best for a known range?", a: "For", o: ["For", "While", "If", "Until"] },
+        { q: "Result of (True AND False)?", a: "False", o: ["True", "False", "None", "Error"] },
+        { q: "Result of (True OR False)?", a: "True", o: ["True", "False", "None", "Error"] },
+        { q: "What is an 'If' statement?", a: "A decision", o: ["A decision", "A loop", "A variable", "A comment"] },
+        { q: "Symbol for 'Not Equal'?", a: "!=", o: ["!=", "==", "<>", "not="] },
+        { q: "Which logic gate flips a value?", a: "NOT", o: ["AND", "OR", "NOT", "XOR"] },
+        { q: "Indentation in loops is for?", a: "Defining blocks", o: ["Defining blocks", "Decoration", "Saving space", "Speed"] },
+        { q: "Starting value of a loop counter?", a: "Initialization", o: ["Initialization", "Increment", "Condition", "Exit"] },
+        { q: "To increase a counter by 1?", a: "Increment", o: ["Increment", "Decrement", "Multiply", "Divide"] },
+        { q: "What is 'Nested' logic?", a: "Code inside code", o: ["Code inside code", "Empty code", "Broken code", "Fast code"] },
+        { q: "If x=5, is (x > 3) true?", a: "Yes", o: ["Yes", "No", "Maybe", "Error"] },
+        { q: "Which keyword handles multiple 'If' checks?", a: "Else If", o: ["Else If", "Only If", "Then", "Loop"] },
+        { q: "A 'Boolean' has how many states?", a: "2", o: ["1", "2", "4", "Infinite"] },
+        { q: "Logic gate that needs both to be True?", a: "AND", o: ["AND", "OR", "XOR", "NOT"] }
+    ],
+    medium: [
+        { q: "What does 'continue' do in a loop?", a: "Skips to next turn", o: ["Skips to next turn", "Stops the loop", "Restarts the PC", "Exits program"] },
+        { q: "A 'While' loop checks the condition?", a: "At the start", o: ["At the start", "At the end", "In the middle", "Never"] },
+        { q: "A 'Do-While' loop runs at least?", a: "Once", o: ["Once", "Twice", "Zero times", "Forever"] },
+        { q: "What is an 'Iteration'?", a: "One cycle of a loop", o: ["One cycle of a loop", "A math error", "A type of variable", "A file name"] },
+        { q: "Result of NOT (False)?", a: "True", o: ["True", "False", "Null", "0"] },
+        { q: "Which is a 'short-circuit' operator?", a: "&&", o: ["&&", "+", "=", "=="] },
+        { q: "The 'Step' in a for-loop controls?", a: "Increment size", o: ["Increment size", "The start value", "The exit condition", "The variable name"] },
+        { q: "A loop inside another loop is?", a: "Nested Loop", o: ["Nested Loop", "Double Loop", "Twin Loop", "Grid Loop"] },
+        { q: "What is a 'Sentinel' value?", a: "A value that stops a loop", o: ["A value that stops a loop", "A loop counter", "A random number", "A syntax error"] },
+        { q: "Logic for 'Either but not Both'?", a: "XOR", o: ["AND", "OR", "XOR", "NOT"] },
+        { q: "Result of (5 > 3 OR 2 > 10)?", a: "True", o: ["True", "False", "Error", "None"] },
+        { q: "What is a 'Predicate'?", a: "A logical expression", o: ["A logical expression", "A type of loop", "A variable name", "A hardware part"] },
+        { q: "Standard for-loop order?", a: "Init, Cond, Step", o: ["Init, Cond, Step", "Step, Init, Cond", "Cond, Step, Init", "Init, Step, Cond"] },
+        { q: "To decrease a counter by 1?", a: "Decrement", o: ["Decrement", "Increment", "Division", "Modulus"] },
+        { q: "Result of (10 == 10 AND 5 > 8)?", a: "False", o: ["True", "False", "Error", "10"] },
+        { q: "What defines an infinite while loop?", a: "while(true)", o: ["while(true)", "while(false)", "while(0)", "while(null)"] },
+        { q: "Complexity of a single loop?", a: "O(n)", o: ["O(n)", "O(1)", "O(n^2)", "O(log n)"] },
+        { q: "In 'For i in range(5)', 'i' is?", a: "The iterator", o: ["The iterator", "The condition", "The range", "The limit"] },
+        { q: "Logic gate: 0 + 0 = 0, 1 + 0 = 1?", a: "OR", o: ["AND", "OR", "NOT", "NAND"] },
+        { q: "What is 'Control Flow'?", a: "Order of execution", o: ["Order of execution", "Speed of CPU", "Memory usage", "Naming rules"] }
+    ],
+    hard: [
+        { q: "Complexity of nested loops (N*N)?", a: "O(n^2)", o: ["O(n^2)", "O(n)", "O(2n)", "O(1)"] },
+        { q: "What is a 'Short-circuit' OR?", a: "Stop if first is True", o: ["Stop if first is True", "Always check both", "Crashes on False", "Ignores the second"] },
+        { q: "Logic behind 'De Morgan's Law'?", a: "Distributing NOT", o: ["Distributing NOT", "Adding loops", "Nested if-else", "Binary addition"] },
+        { q: "What is 'Recursion'?", a: "Function calling itself", o: ["Function calling itself", "A loop that never ends", "A type of variable", "Binary logic"] },
+        { q: "Base Case in recursion prevents?", a: "Stack Overflow", o: ["Stack Overflow", "Fast execution", "Code deletion", "Logic errors"] },
+        { q: "Which gate is the inverse of AND?", a: "NAND", o: ["NAND", "NOR", "XOR", "OR"] },
+        { q: "What is a 'State Machine'?", a: "Logic based on status", o: ["Logic based on status", "A fast CPU", "A cooling system", "A type of RAM"] },
+        { q: "A 'Truth Table' shows?", a: "All possible logic outputs", o: ["All possible logic outputs", "Variable names", "Program speed", "Memory addresses"] },
+        { q: "Complexity of Binary Search?", a: "O(log n)", o: ["O(log n)", "O(n)", "O(n^2)", "O(1)"] },
+        { q: "What is 'Linear' complexity?", a: "O(n)", o: ["O(n)", "O(1)", "O(n^2)", "O(log n)"] },
+        { q: "What is 'Constant' complexity?", a: "O(1)", o: ["O(1)", "O(n)", "O(n^2)", "O(log n)"] },
+        { q: "The 'L' in REPL stands for?", a: "Loop", o: ["Loop", "List", "Link", "Logic"] },
+        { q: "Boolean Algebra was named after?", a: "George Boole", o: ["George Boole", "Alan Turing", "John von Neumann", "Ada Lovelace"] },
+        { q: "Result of (A XOR A)?", a: "0 / False", o: ["0 / False", "1 / True", "A", "Error"] },
+        { q: "What is 'Lazy Evaluation'?", a: "Calculate only if needed", o: ["Calculate only if needed", "Slow code", "Broken loops", "Binary errors"] },
+        { q: "A 'Flag' variable is used to?", a: "Signal a condition", o: ["Signal a condition", "Store math", "Name a file", "Connect to internet"] },
+        { q: "What is a 'Branch' in logic?", a: "A path selection", o: ["A path selection", "A loop cycle", "A variable type", "A comment"] },
+        { q: "In logic, what is a 'Tautology'?", a: "Always True", o: ["Always True", "Always False", "Sometimes True", "Broken"] },
+        { q: "Inverse of 'P AND Q'?", a: "NOT P OR NOT Q", o: ["NOT P OR NOT Q", "NOT P AND NOT Q", "P OR Q", "NOT P"] },
+        { q: "What is 'Dead Code'?", a: "Logic never reached", o: ["Logic never reached", "Deleted code", "Binary data", "A system crash"] }
+    ]
+},
+           "python syntax": {
+    easy: [
+        { q: "How do you display text in Python?", a: "print()", o: ["print()", "show()", "display()", "echo"] },
+        { q: "Which symbol starts a comment?", a: "#", o: ["#", "//", "/*", "--"] },
+        { q: "How do you create a variable in Python?", a: "name = value", o: ["name = value", "var name = value", "int name = value", "let name"] },
+        { q: "Which extension is used for Python files?", a: ".py", o: [".py", ".pt", ".python", ".txt"] },
+        { q: "How do you define a function in Python?", a: "def", o: ["def", "func", "function", "define"] },
+        { q: "Python uses ___ to define code blocks.", a: "Indentation", o: ["Indentation", "Brackets", "Parentheses", "Quotes"] },
+        { q: "Which is a valid list in Python?", a: "[1, 2, 3]", o: ["[1, 2, 3]", "{1, 2, 3}", "(1, 2, 3)", "<1, 2, 3>"] },
+        { q: "How do you get user input?", a: "input()", o: ["input()", "get()", "scan()", "read()"] },
+        { q: "What is the result of 2 ** 3?", a: "8", o: ["6", "8", "5", "9"] },
+        { q: "Which keyword is used for 'Else If'?", a: "elif", o: ["elif", "else if", "elseif", "if else"] },
+        { q: "How do you check the length of a string?", a: "len()", o: ["len()", "length()", "size()", "count()"] },
+        { q: "What is the boolean for 'no value'?", a: "None", o: ["None", "Null", "Empty", "False"] },
+        { q: "Which is used for a multi-line string?", a: "Triple quotes", o: ["Triple quotes", "Double quotes", "Hashtags", "Slashes"] },
+        { q: "How do you convert to an integer?", a: "int()", o: ["int()", "to_int()", "Integer()", "num()"] },
+        { q: "Is 'Python' the same as 'python'?", a: "No", o: ["Yes", "No", "Depends", "In loops only"] },
+        { q: "Which symbol is used for multiplication?", a: "*", o: ["*", "x", "X", "^"] },
+        { q: "What is the output of print(3 + 2)?", a: "5", o: ["32", "5", "Error", "None"] },
+        { q: "How do you exit a loop early?", a: "break", o: ["break", "stop", "exit", "quit"] },
+        { q: "Which one is a Boolean value?", a: "True", o: ["True", "true", "'True'", "1"] },
+        { q: "What follows a 'def' or 'if' line?", a: "A colon (:)", o: ["A colon (:)", "A semicolon (;)", "A period (.)", "A comma (,)"] }
+    ],
+    medium: [
+        { q: "What does '10 // 3' result in?", a: "3", o: ["3.33", "3", "1", "4"] },
+        { q: "How do you add an item to a list?", a: "append()", o: ["append()", "add()", "insert()", "push()"] },
+        { q: "Which operator checks if a value exists in a list?", a: "in", o: ["in", "has", "contains", "exists"] },
+        { q: "What is a 'Tuple' in Python?", a: "Immutable list", o: ["Immutable list", "A function", "A loop", "A comment"] },
+        { q: "How do you import a module?", a: "import", o: ["import", "include", "require", "using"] },
+        { q: "Which function generates a sequence of numbers?", a: "range()", o: ["range()", "list()", "seq()", "numbers()"] },
+        { q: "What is a 'Dictionary'?", a: "Key-Value pairs", o: ["Key-Value pairs", "A list of strings", "A type of loop", "A math formula"] },
+        { q: "How do you remove the last item from a list?", a: "pop()", o: ["pop()", "remove()", "delete()", "clear()"] },
+        { q: "What does 'string'.upper() do?", a: "Makes it uppercase", o: ["Makes it uppercase", "Adds a space", "Reverses it", "Deletes it"] },
+        { q: "Which loop is used to iterate over a list?", a: "for", o: ["for", "while", "do", "foreach"] },
+        { q: "How do you start a class?", a: "class", o: ["class", "object", "struct", "define class"] },
+        { q: "What is f-string used for?", a: "String formatting", o: ["String formatting", "Files", "Functions", "Fast loops"] },
+        { q: "What does '%' operator do?", a: "Finds the remainder", o: ["Finds the remainder", "Division", "Percentage", "Power"] },
+        { q: "Result of 'Hello' * 2?", a: "'HelloHello'", o: ["'HelloHello'", "'Hello 2'", "Error", "'Hello'"] },
+        { q: "How do you check the type of a variable?", a: "type()", o: ["type()", "kind()", "is()", "check()"] },
+        { q: "Which is a valid Dictionary?", a: "{'a': 1}", o: ["{'a': 1}", "['a', 1]", "('a', 1)", "<'a', 1>"] },
+        { q: "What is 'self' in a class?", a: "Refers to the instance", o: ["Refers to the instance", "A global variable", "A keyword for loops", "An error"] },
+        { q: "How do you handle potential errors?", a: "try / except", o: ["try / except", "if / else", "error / catch", "check / fail"] },
+        { q: "What does 'strip()' do?", a: "Removes whitespace", o: ["Removes whitespace", "Splits a string", "Joins a list", "Deletes data"] },
+        { q: "Is indentation mandatory in Python?", a: "Yes", o: ["Yes", "No", "Only for style", "Only in functions"] }
+    ],
+    hard: [
+        { q: "What is 'List Comprehension'?", a: "Short way to create lists", o: ["Short way to create lists", "A type of sorting", "A list error", "A global list"] },
+        { q: "What does the 'with' statement do?", a: "Manages resources/files", o: ["Manages resources/files", "Starts a loop", "Defines a class", "Prints data"] },
+        { q: "What is a 'Lambda' function?", a: "An anonymous function", o: ["An anonymous function", "A recursive function", "A loop type", "A math constant"] },
+        { q: "What is a 'Decorator' (@)?", a: "Modifies function behavior", o: ["Modifies function behavior", "A comment style", "A class name", "A file extension"] },
+        { q: "What does 'is' check vs '=='?", a: "Identity vs Equality", o: ["Identity vs Equality", "Same thing", "Size vs Type", "Value vs Memory"] },
+        { q: "What is a 'Generator'?", a: "Function that yields values", o: ["Function that yields values", "A random number creator", "A file writer", "A loop builder"] },
+        { q: "What does 'global' keyword do?", a: "Accesses global variables", o: ["Accesses global variables", "Makes code public", "Starts a server", "Exports data"] },
+        { q: "Which method is the constructor?", a: "__init__", o: ["__init__", "__main__", "__start__", "__new__"] },
+        { q: "What is 'PEP 8'?", a: "Style guide for Python", o: ["Style guide for Python", "A Python version", "A compiler error", "A library"] },
+        { q: "What does '*args' allow?", a: "Multiple arguments", o: ["Multiple arguments", "Multiplying values", "Starting a loop", "Naming variables"] },
+        { q: "What is 'Slicing'?", a: "Selecting part of a list", o: ["Selecting part of a list", "Deleting a variable", "Splitting a file", "Sorting data"] },
+        { q: "Result of [1, 2] + [3]?", a: "[1, 2, 3]", o: ["[1, 2, 3]", "6", "Error", "[4, 5]"] },
+        { q: "What is 'MRO' in classes?", a: "Method Resolution Order", o: ["Method Resolution Order", "Main Run Object", "Memory Run Only", "Module Rule Order"] },
+        { q: "Which library is for Data Science?", a: "Pandas", o: ["Pandas", "Django", "Flask", "PyGame"] },
+        { q: "What does 'del' do?", a: "Deletes an object", o: ["Deletes an object", "Stops a loop", "Clears the screen", "Subtracts"] },
+        { q: "What is a 'Docstring'?", a: "Documentation in triple quotes", o: ["Documentation in triple quotes", "A type of string variable", "A file name", "A print style"] },
+        { q: "What does 'map()' do?", a: "Applies function to items", o: ["Applies function to items", "Creates a visual map", "Finds the location", "Deletes a list"] },
+        { q: "What is 'Duck Typing'?", a: "Behavior over type", o: ["Behavior over type", "A type of error", "A loop style", "Animal coding"] },
+        { q: "How do you swap x and y?", a: "x, y = y, x", o: ["x, y = y, x", "swap(x, y)", "x = y; y = x", "y = x; x = y"] },
+        { q: "What is '__name__ == \"__main__\"' for?", a: "Script entry point", o: ["Script entry point", "Defining a name", "Naming a file", "An error check"] }
+    ]
+}
+        };
+
+        const topicData = masterBank[gameData.topic] || masterBank["basics of computer"];
+        const rawPool = topicData[gameData.difficulty] || topicData.easy;
+        let activePool = [...rawPool];
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        shuffle(activePool);
+
+        let scores = { t1: 0, t2: 0 };
+        let ropePos = 0;
+        const winLimit = gameData.pointsToWin * 60;
+
+        function init() {
+            document.getElementById('t1-display').innerText = `${gameData.team1}: 0`;
+            document.getElementById('t2-display').innerText = `${gameData.team2}: 0`;
+            document.getElementById('topic-tag').innerText = `TOPIC: ${gameData.topic.toUpperCase()} (${gameData.difficulty.toUpperCase()})`;
+            spawnTeams();
+            renderQuestion(1);
+            renderQuestion(2);
+        }
+
+        function spawnTeams() {
+            const left = document.getElementById('team-left-squad');
+            const right = document.getElementById('team-right-squad');
+            left.innerHTML = ''; right.innerHTML = '';
+            for(let i=0; i<5; i++) {
+                left.innerHTML += `<div class="character c-left"></div>`;
+                right.innerHTML += `<div class="character c-right"></div>`;
+            }
+        }
+
+        function renderQuestion(playerNum) {
+            if (activePool.length === 0) {
+                activePool = [...rawPool];
+                shuffle(activePool);
+            }
+
+            const qData = activePool.pop();
+            const qDiv = document.getElementById(`q${playerNum}`);
+            const optDiv = document.getElementById(`opts-${playerNum}`);
+            
+            qDiv.innerText = qData.q;
+            optDiv.innerHTML = '';
+
+            shuffle([...qData.o]).forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'ans-btn';
+                btn.innerText = opt;
+                btn.onclick = () => handleAnswer(playerNum, opt, qData.a);
+                optDiv.appendChild(btn);
+            });
+        }
+
+        function handleAnswer(player, selected, correct) {
+            if(selected === correct) {
+                document.getElementById('sfx-correct').currentTime = 0;
+                document.getElementById('sfx-correct').play();
+                scores[`t${player}`]++;
+                document.getElementById(`t${player}-display`).innerText = `${player === 1 ? gameData.team1 : gameData.team2}: ${scores[`t${player}`]}`;
+                ropePos += (player === 1 ? -60 : 60);
+                updateVisuals();
+                renderQuestion(player);
+                checkWin();
+            } else {
+                const card = document.getElementById(`card-${player}`);
+                card.style.borderColor = "#ff4757";
+                card.animate([
+                    { transform: 'translateX(0px)' },
+                    { transform: 'translateX(-10px)' },
+                    { transform: 'translateX(10px)' },
+                    { transform: 'translateX(0px)' }
+                ], { duration: 200 });
+                setTimeout(() => card.style.borderColor = "rgba(255,255,255,0.1)", 400);
+            }
+        }
+
+        function updateVisuals() {
+            document.getElementById('rope').style.transform = `translateX(${ropePos}px)`;
+            document.getElementById('team-left-squad').style.transform = `translateX(${ropePos}px)`;
+            document.getElementById('team-right-squad').style.transform = `translateX(${ropePos}px)`;
+        }
+
+        function checkWin() {
+            if(Math.abs(ropePos) >= winLimit) {
+                const winner = ropePos < 0 ? gameData.team1 : gameData.team2;
+                showVictory(winner);
+            }
+        }
+
+        function showVictory(name) {
+            document.getElementById('winner-name').innerText = name + " WINS!";
+            document.getElementById('win-overlay').style.display = 'flex';
+            for(let i=0; i<100; i++) createConfetti();
+        }
+
+        function createConfetti() {
+            const c = document.createElement('div');
+            c.className = 'confetti';
+            c.style.left = Math.random() * 100 + 'vw';
+            c.style.backgroundColor = ['#ff00ff','#00d2ff','#ff9f43','#4CAF7B'][Math.floor(Math.random()*4)];
+            c.style.animationDuration = (Math.random() * 3 + 2) + 's';
+            c.style.opacity = Math.random();
+            document.body.appendChild(c);
+        }
+
+        init();
+    </script>
+</body>
+</html>

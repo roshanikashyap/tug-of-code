@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tug of Code - Sign Up & Save Progress</title>
+    <style>
+        :root {
+            --bg-color: #FAF8FC; 
+            --primary-purple: #7C4DFF; 
+            --dark-purple: #5E35B1;    
+            --light-purple-bg: #E0DAF5; 
+            --text-dark: #1A0033;
+            --input-border: #DDD;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .auth-container {
+            background-color: white;
+            padding: 40px 50px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(124, 77, 255, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            border: 1px solid var(--light-purple-bg);
+        }
+
+        h2 { font-size: 1.8rem; color: var(--dark-purple); margin-bottom: 5px; font-weight: 800; }
+        .subtitle { color: #666; margin-bottom: 30px; font-size: 0.9rem; }
+
+        .input-group { text-align: left; margin-bottom: 18px; }
+        label { display: block; text-transform: uppercase; font-weight: bold; font-size: 0.7rem; color: var(--dark-purple); margin-bottom: 6px; letter-spacing: 0.5px; }
+        input { width: 100%; padding: 12px; border: 2px solid var(--input-border); border-radius: 10px; box-sizing: border-border-box; font-size: 1rem; transition: 0.3s; }
+        input:focus { outline: none; border-color: var(--primary-purple); }
+
+        .btn-main {
+            background-color: var(--primary-purple);
+            color: white;
+            padding: 16px;
+            width: 100%;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: 0.3s;
+        }
+
+        .btn-main:hover { background-color: var(--dark-purple); transform: translateY(-2px); }
+
+        .toggle-text { margin-top: 25px; font-size: 0.85rem; color: #777; }
+        .toggle-text span { color: var(--primary-purple); font-weight: bold; cursor: pointer; text-decoration: underline; }
+        
+        .msg { font-size: 0.8rem; margin-top: 10px; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="auth-container">
+    <div style="font-size: 1.3rem; color: var(--dark-purple); margin-bottom: 10px;">💻<strong>TUG OF CODE</strong></div>
+    <h2 id="formTitle">Create Account</h2>
+    <p class="subtitle" id="formSubtitle">Save your progress and lead your team</p>
+
+    <form id="authForm">
+        <div class="input-group" id="nameWrapper">
+            <label>Full Name</label>
+            <input type="text" id="userName" placeholder="Enter your name">
+        </div>
+        <div class="input-group">
+            <label>Email Address</label>
+            <input type="email" id="userEmail" placeholder="name@example.com" required>
+        </div>
+        <div class="input-group">
+            <label>Password</label>
+            <input type="password" id="userPass" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn-main" id="submitBtn">Sign Up & Save</button>
+        <div id="errorMsg" class="msg" style="color: red;"></div>
+    </form>
+
+    <div class="toggle-text">
+        <span id="toggleQuestion">Already have an account?</span> 
+        <span onclick="toggleMode()" id="toggleAction">Log In</span>
+    </div>
+</div>
+
+<script>
+    let isSignUp = true;
+
+    function toggleMode() {
+        isSignUp = !isSignUp;
+        document.getElementById('formTitle').innerText = isSignUp ? 'Create Account' : 'Welcome Back';
+        document.getElementById('submitBtn').innerText = isSignUp ? 'Sign Up & Save' : 'Log In';
+        document.getElementById('nameWrapper').style.display = isSignUp ? 'block' : 'none';
+        document.getElementById('toggleQuestion').innerText = isSignUp ? 'Already have an account?' : 'New to Tug of Code?';
+        document.getElementById('toggleAction').innerText = isSignUp ? 'Log In' : 'Create one';
+        document.getElementById('errorMsg').style.display = 'none';
+    }
+
+    document.getElementById('authForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const name = document.getElementById('userName').value;
+        const email = document.getElementById('userEmail').value;
+        const pass = document.getElementById('userPass').value;
+        const errorMsg = document.getElementById('errorMsg');
+
+        if (isSignUp) {
+            // Save user data to localStorage
+            const userData = { name: name, email: email, password: pass, level: 1 };
+            localStorage.setItem(email, JSON.stringify(userData));
+            localStorage.setItem('currentUser', email);
+            alert("Account created! Your progress will now be saved.");
+            window.location.href = 'setup.html';
+        } else {
+            // Check if user exists
+            const savedUser = localStorage.getItem(email);
+            if (savedUser) {
+                const parsedUser = JSON.parse(savedUser);
+                if (parsedUser.password === pass) {
+                    localStorage.setItem('currentUser', email);
+                    window.location.href = 'setup.html';
+                } else {
+                    errorMsg.innerText = "Incorrect password.";
+                    errorMsg.style.display = 'block';
+                }
+            } else {
+                errorMsg.innerText = "Account not found.";
+                errorMsg.style.display = 'block';
+            }
+        }
+    });
+</script>
+
+</body>
+</html>

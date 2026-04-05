@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tug of Code - Purple Tech Theme</title>
+    <style>
+        /* --- CORE STYLES & PURPLE THEME --- */
+        :root {
+            --bg-color: #FAF8FC; 
+            --primary-purple: #7C4DFF; 
+            --dark-purple: #5E35B1;    
+            --light-purple-bg: #E0DAF5; 
+            --text-dark: #1A0033;
+            --text-med: #555;
+            --badge-pink: #FDE2E4;
+            --badge-blue: #D1E9F0;
+            --badge-orange: #F9E2D2;
+            --badge-green: #D5EDD5;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            color: var(--text-dark);
+            text-align: center;
+            overflow-x: hidden; 
+            scroll-behavior: smooth; 
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            width: 140px; 
+            height: 48px;
+            font-size: 1rem;
+            border: 2px solid transparent;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        .btn-secondary {
+            background-color: white;
+            color: var(--dark-purple);
+            border-color: #DDD;
+        }
+
+        .btn-secondary:hover {
+            background-color: #F0F0F0;
+            border-color: #CCC;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-purple);
+            color: white;
+            margin-top: 10px; 
+        }
+
+        .btn-lg {
+            width: 180px;
+            height: 60px;
+            font-size: 1.2rem;
+            margin-top: 30px;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .bounce-hover:hover {
+            animation: bounce 0.6s ease infinite;
+            background-color: var(--dark-purple); 
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px 5%;
+            align-items: center;
+            position: fixed; 
+            top: 0;
+            width: 90%;
+            background-color: rgba(250, 248, 252, 0.95); 
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--dark-purple);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        section {
+            padding: 100px 10%; 
+            min-height: 80vh; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        h2 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: var(--dark-purple);
+        }
+
+        p.intro-text {
+            font-size: 1.3rem;
+            line-height: 1.6;
+            color: var(--text-med);
+            max-width: 800px;
+            margin-bottom: 40px;
+        }
+
+        .hero {
+            padding-top: 160px; 
+        }
+
+        .hero h1 {
+            font-size: 4.5rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            color: var(--dark-purple);
+        }
+
+        .hero h1 span {
+            color: var(--primary-purple);
+        }
+
+        .game-visual-section {
+            background-color: #EDF1F7; 
+            padding: 60px 0;
+            width: 100%;
+            margin: 50px 0;
+        }
+
+        .math-bubbles {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 50px;
+        }
+
+        .bubble {
+            background: white;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-family: 'Courier New', monospace; 
+            font-weight: bold;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            border: 2px solid var(--light-purple-bg);
+        }
+
+        .tug-arena {
+            position: relative;
+            width: 800px;
+            height: 200px;
+            margin: 0 auto;
+        }
+
+        .rope {
+            position: absolute;
+            top: 50%;
+            left: 10%;
+            width: 80%;
+            height: 8px;
+            background-color: #8D6E63; 
+            border-radius: 4px;
+            transform: translateY(-50%);
+        }
+
+        .flag {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 15px;
+            height: 30px;
+            background-color: #E53935; 
+            transform: translate(-50%, -100%);
+            border-radius: 2px;
+        }
+
+        @keyframes pullRope {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(10px); } 
+        }
+
+        .character-team {
+            display: flex;
+            gap: 15px;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            animation: pullRope 1.5s ease-in-out infinite; 
+        }
+
+        .team-left { left: 5%; }
+        .team-right { 
+            right: 5%; 
+            flex-direction: row-reverse; 
+            animation-delay: 0.75s; 
+        }
+
+        .char {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px; 
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .purple-char { 
+            background-color: #D1C4E9; 
+            color: #4A148C;
+        }
+        
+        .blue-char { 
+            background-color: #BBDEFB; 
+            color: #0D47A1;
+        }
+
+        .char::before {
+            content: '• •'; 
+            position: absolute;
+            top: 20px;
+            font-size: 1.2rem;
+            letter-spacing: 5px;
+        }
+        
+        .char::after {
+            content: ')'; 
+            position: absolute;
+            bottom: 12px;
+            font-size: 1rem;
+            transform: rotate(90deg);
+        }
+
+        .triangle-char {
+            width: 0;
+            height: 0;
+            border-left: 30px solid transparent;
+            border-right: 30px solid transparent;
+            border-bottom: 60px solid; 
+            background-color: transparent;
+            border-radius: 0;
+        }
+        
+        .triangle-char::before { top: 25px; color: currentcolor; }
+        .triangle-char::after { bottom: -5px; color: currentcolor;}
+
+        .steps { background-color: white; }
+
+        .card-container {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 60px;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .card {
+            background: var(--light-purple-bg);
+            padding: 40px;
+            border-radius: 20px;
+            width: 320px;
+            text-align: left;
+            position: relative;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover { transform: translateY(-10px); }
+
+        .step-num {
+            background: var(--dark-purple);
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 25px;
+        }
+
+        .card h3 { color: var(--dark-purple); font-size: 1.5rem; margin-bottom: 15px; }
+        .card p { color: #666; line-height: 1.6; font-size: 1rem; }
+
+        .operations { background-color: var(--bg-color); }
+
+        .badge-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 40px;
+            max-width: 800px;
+        }
+
+        .badge {
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .badge-pnk { background: var(--badge-pink); color: #702D32; }
+        .badge-blu { background: var(--badge-blue); color: #2D5A70; }
+        .badge-org { background: var(--badge-orange); color: #704B2D; }
+        .badge-grn { background: var(--badge-green); color: #2D702D; }
+        .badge-pur { background: #E1BEE7; color: #4A148C; } 
+
+        .use-cases { background-color: white; min-height: auto; padding-bottom: 120px; }
+        .white-card { background: white; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #EEE; padding: 40px; width: 300px; }
+        .icon-circle { width: 50px; height: 50px; border-radius: 50%; background: var(--light-purple-bg); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; margin-bottom: 20px; }
+
+        /* MODAL STYLE */
+        #statsModal {
+            display:none; 
+            position:fixed; 
+            top:50%; left:50%; 
+            transform:translate(-50%, -50%); 
+            background:white; 
+            padding:40px; 
+            border-radius:20px; 
+            box-shadow:0 0 50px rgba(0,0,0,0.2); 
+            z-index:2000; 
+            width:300px; 
+            text-align:center; 
+            border: 2px solid var(--primary-purple);
+        }
+
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="logo">
+            <span>💻</span><strong>TUG OF CODE</strong>
+        </div>
+        <div class="nav-buttons" id="navActionArea">
+            <button onclick="window.location.href='auth.html'" class="btn btn-secondary">Log In</button>
+            <button onclick="window.location.href='auth.html'" class="btn btn-secondary">Sign Up Free</button>
+            <a href="setup.html" class="btn btn-primary bounce-hover">Play Now →</a>
+        </div>
+    </nav>
+
+    <header class="hero" id="home">
+        <h1>The only computer game <br> built for your <span>code classroom</span></h1>
+        <p class="intro-textSubtitle">Two teams. One screen. Zero setup. Split your class into <strong>two developer teams</strong> and let them battle it out in a tug of war solving code snippets. Right on your interactive display.</p>
+        <a href="setup.html" class="btn btn-primary btn-lg bounce-hover">Play Now →</a>
+    </header>
+
+    <section class="game-visual-section" id="visual">
+        <div class="math-bubbles">
+            <div class="bubble">if (x > 5) { print("win") }</div>
+            <div class="bubble">while (count < 10) { ... }</div>
+            <div class="bubble">for i in range(5): ...</div>
+        </div>
+        <div class="tug-arena">
+            <div class="rope"></div>
+            <div class="flag"></div>
+            <div class="character-team team-left">
+                <div class="char triangle-char purple-char"></div> <div class="char purple-char"></div>
+                <div class="char triangle-char purple-char"></div>
+            </div>
+            <div class="character-team team-right">
+                <div class="char triangle-char blue-char"></div> <div class="char blue-char"></div>
+                <div class="char triangle-char blue-char"></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="steps" id="how-it-works">
+        <h2>Ready in seconds</h2>
+        <div class="card-container">
+            <div class="card">
+                <div class="step-num">1</div>
+                <h3>Open on your display</h3>
+                <p>Visit tugofcode.app on your board. No login required for guest play.</p>
+            </div>
+            <div class="card">
+                <div class="step-num">2</div>
+                <h3>Pick your challenge</h3>
+                <p>Choose your coding language and set the difficulty level.</p>
+            </div>
+            <div class="card">
+                <div class="step-num">3</div>
+                <h3>Let them compete</h3>
+                <p>Two dev teams race to solve logic puzzles. First team past the line wins.</p>
+            </div>
+        </div>
+    </section>
+
+    <div id="statsModal">
+        <h3 style="color:#5E35B1;">Developer Stats</h3>
+        <hr style="border:0; border-top:1px solid #EEE; margin:15px 0;">
+        <p><strong>Total Playtime:</strong> <span id="playtime">0</span> mins</p>
+        <p><strong>Current Stage:</strong> <span id="stageDisplay">1</span></p>
+        <button onclick="closeStats()" class="btn btn-primary" style="width:100%; margin-top:10px;">Close</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentUserEmail = localStorage.getItem('currentUser');
+            const navArea = document.getElementById('navActionArea');
+
+            if (currentUserEmail) {
+                const userData = JSON.parse(localStorage.getItem(currentUserEmail));
+                
+                // Keep the button text as "Play Now" but show progress button
+                navArea.innerHTML = `
+                    <div style="text-align: right; margin-right: 15px;">
+                        <span style="color: #5E35B1; font-weight: bold; display: block; font-size: 0.85rem;">
+                            Welcome, ${userData.name}!
+                        </span>
+                        <a href="#" onclick="logout()" style="color: #888; font-size: 0.75rem; text-decoration: none;">Logout</a>
+                    </div>
+                    <button onclick="showStats()" class="btn btn-secondary">My Progress</button>
+                    <a href="setup.html" class="btn btn-primary bounce-hover">Play Now →</a>
+                `;
+            }
+        });
+
+        function showStats() {
+            const currentUserEmail = localStorage.getItem('currentUser');
+            if(currentUserEmail) {
+                const userData = JSON.parse(localStorage.getItem(currentUserEmail));
+                document.getElementById('playtime').innerText = Math.floor(Math.random() * 20) + 5; 
+                document.getElementById('stageDisplay').innerText = userData.level || 1;
+                document.getElementById('statsModal').style.display = 'block';
+            }
+        }
+
+        function closeStats() { document.getElementById('statsModal').style.display = 'none'; }
+        
+        function logout() {
+            localStorage.removeItem('currentUser');
+            window.location.reload();
+        }
+    </script>
+
+</body>
+</html>

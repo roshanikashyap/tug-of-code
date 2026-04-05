@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tug of Code - Setup</title>
+    <style>
+        :root {
+            --bg-color: #FAF8FC;
+            --primary-purple: #7C4DFF;
+            --dark-purple: #5E35B1;
+            --dashboard-beige: #F4EFE6;
+            --success-green: #4CAF7B;
+            --text-gray: #888;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 60px;
+            color: #333;
+        }
+
+        /* --- BACK BUTTON --- */
+        .back-link {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            text-decoration: none;
+            color: var(--dark-purple);
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            z-index: 1001;
+            padding: 8px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            transition: all 0.2s;
+        }
+
+        .back-link:hover {
+            background: #f0f0f0;
+            transform: translateX(-3px);
+        }
+
+        /* --- TEAM NAME INPUTS --- */
+        .team-header {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            max-width: 1000px;
+            margin-bottom: 50px;
+        }
+
+        .team-input-group { text-align: center; }
+        
+        .team-input-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: #BBB;
+            margin-bottom: 8px;
+            letter-spacing: 1.5px;
+        }
+
+        .team-input-group input {
+            font-size: 3.5rem;
+            font-weight: 900;
+            border: none;
+            border-bottom: 4px solid #EEE;
+            background: transparent;
+            color: var(--dark-purple);
+            text-align: center;
+            width: 380px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .team-input-group input:focus {
+            border-bottom-color: var(--primary-purple);
+        }
+
+        /* --- MAIN DASHBOARD --- */
+        .dashboard {
+            background-color: var(--dashboard-beige);
+            border-radius: 45px;
+            padding: 40px;
+            width: 90%;
+            max-width: 1000px;
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.03);
+        }
+
+        .panel {
+            background: white;
+            border-radius: 28px;
+            padding: 35px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 0px rgba(0,0,0,0.05);
+        }
+
+        /* Points Counter */
+        .counter-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 25px;
+        }
+
+        .btn-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 1px solid #DDD;
+            background: white;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #555;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .btn-circle:hover { background: #F5F5F5; }
+
+        .points-display-container { text-align: center; }
+        
+        .points-val {
+            font-size: 5rem;
+            font-weight: 900;
+            line-height: 1;
+            color: #1A0033;
+        }
+
+        /* Difficulty Toggle */
+        .difficulty-box {
+            display: flex;
+            gap: 12px;
+            margin: 25px 0;
+        }
+
+        .diff-btn {
+            flex: 1;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid #DDD;
+            background: white;
+            font-weight: bold;
+            cursor: pointer;
+            color: #777;
+            transition: 0.2s;
+        }
+
+        .diff-btn.active {
+            border: 2px solid var(--dark-purple);
+            color: var(--dark-purple);
+            box-shadow: 0 4px 0 var(--dark-purple);
+        }
+
+        /* --- START BUTTON & BOUNCE --- */
+        @keyframes button-bounce {
+            0% { transform: scale(1); }
+            30% { transform: scale(0.92); }
+            50% { transform: scale(1.08); }
+            100% { transform: scale(1); }
+        }
+
+        .bounce-active {
+            animation: button-bounce 0.4s ease-out;
+        }
+
+        .start-btn {
+            background-color: var(--success-green);
+            color: white;
+            border: none;
+            padding: 24px;
+            border-radius: 18px;
+            font-size: 1.6rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: auto;
+            transition: filter 0.2s;
+        }
+
+        .start-btn:hover { filter: brightness(1.05); }
+
+        /* Problem Sets */
+        .problem-list h3 { margin: 0 0 20px 0; font-size: 1.5rem; }
+        
+        .set-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #F0F0F0;
+        }
+
+        .set-title { font-weight: bold; font-size: 1.1rem; color: #222; display: block; }
+        .set-meta { font-size: 0.9rem; color: #999; margin-top: 4px; }
+
+        .use-btn {
+            background-color: #F0F0F0;
+            color: #666;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .selected .use-btn {
+            background-color: var(--success-green);
+            color: white;
+        }
+
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="back-link">← Back to Home</a>
+
+    <div class="team-header">
+        <div class="team-input-group">
+            <label>TEAM NAME</label>
+            <input type="text" id="t1-input" value="TEAM 1">
+        </div>
+        <div class="team-input-group">
+            <label>TEAM NAME</label>
+            <input type="text" id="t2-input" value="TEAM 2">
+        </div>
+    </div>
+
+    <div class="dashboard">
+        <div class="panel">
+            <div class="counter-section">
+                <button class="btn-circle" onclick="changePoints(-1)">−</button>
+                <div class="points-display-container">
+                    <div class="points-val" id="pt-val">5</div>
+                    <div style="color: var(--text-gray); font-weight: bold;">Points</div>
+                </div>
+                <button class="btn-circle" onclick="changePoints(1)">+</button>
+            </div>
+
+            <div class="difficulty-box">
+                <button class="diff-btn active" onclick="setDiff(this)">Easy</button>
+                <button class="diff-btn" onclick="setDiff(this)">Medium</button>
+                <button class="diff-btn" onclick="setDiff(this)">Hard</button>
+            </div>
+
+            <button class="start-btn" id="start-btn" onclick="triggerStart()">Start Game</button>
+        </div>
+
+        <div class="panel problem-list">
+            <h3>Problem Sets</h3>
+            
+            <div class="set-item selected">
+                <div class="set-info">
+                    <span class="set-title">Basics of Computer</span>
+                    <span class="set-meta">Mixed • 25 Problems</span>
+                </div>
+                <button class="use-btn" onclick="selectSet(this)">Use</button>
+            </div>
+
+            <div class="set-item">
+                <div class="set-info">
+                    <span class="set-title">Variable Basics</span>
+                    <span class="set-meta">Easy • 20 Problems</span>
+                </div>
+                <button class="use-btn" onclick="selectSet(this)">Use</button>
+            </div>
+
+            <div class="set-item">
+                <div class="set-info">
+                    <span class="set-title">Logic & Loops</span>
+                    <span class="set-meta">Medium • 15 Problems</span>
+                </div>
+                <button class="use-btn" onclick="selectSet(this)">Use</button>
+            </div>
+
+            <div class="set-item" style="border:none;">
+                <div class="set-info">
+                    <span class="set-title">Python Syntax</span>
+                    <span class="set-meta">Hard • 10 Problems</span>
+                </div>
+                <button class="use-btn" onclick="selectSet(this)">Use</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Handle Point Changes
+        let points = 5;
+        function changePoints(val) {
+            points += val;
+            if (points < 1) points = 1;
+            document.getElementById('pt-val').innerText = points;
+        }
+
+        // Handle Difficulty Selection
+        function setDiff(btn) {
+            document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        // Handle Problem Set Selection
+        function selectSet(btn) {
+            document.querySelectorAll('.set-item').forEach(i => i.classList.remove('selected'));
+            btn.parentElement.classList.add('selected');
+        }
+
+        // --- UPDATED LINKING LOGIC ---
+        function triggerStart() {
+            const btn = document.getElementById('start-btn');
+            btn.classList.add('bounce-active');
+            
+            // 1. Gather all settings
+            const t1 = document.getElementById('t1-input').value;
+            const t2 = document.getElementById('t2-input').value;
+            const chosenPoints = document.getElementById('pt-val').innerText;
+            const difficulty = document.querySelector('.diff-btn.active').innerText;
+            const topic = document.querySelector('.set-item.selected .set-title').innerText;
+
+            // 2. Save them to localStorage
+            localStorage.setItem('team1', t1);
+            localStorage.setItem('team2', t2);
+            localStorage.setItem('points', chosenPoints);
+            localStorage.setItem('difficulty', difficulty);
+            localStorage.setItem('topic', topic);
+
+            // 3. Navigate to battle.html after animation
+            setTimeout(() => {
+                btn.classList.remove('bounce-active');
+                window.location.href = "battle.html"; 
+            }, 400);
+        }
+    </script>
+</body>
+</html>
